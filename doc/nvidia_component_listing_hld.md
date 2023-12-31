@@ -26,8 +26,8 @@
 # Motivation
 
 We want to have a file that gathers the versions of all Nvidia SONiC components for two reasons:
-a. Easily compare actual build vs qualified hash components (listed in SONiC release notes)
-b. Shorten debug time - one place for the support team to view all relevant information
+- Easily compare actual build vs qualified hash components (listed in SONiC release notes)
+- Shorten debug time - one place for the support team to view all relevant information
 
 # About this Manual
 
@@ -48,7 +48,7 @@ The versions that need to be added to the file are:
 - ONIE
 
 All the versions will be listed in a file that will be stored on the switch in /etc/mlnx/.
-The file will be created in compilation at which point it will contain only the internal Nvidia components - `SDK, FW, SAI, HW MGMT, MFT` - since the versions of the platform components will not be known at this stage.
+The file will be created in compilation at which point it will contain only the internal Nvidia components - `SDK, FW, SAI, HW MGMT, MFT, Kernel` - since the versions of the platform components will not be known at this stage.
 The versions of the platform components - `BIOS, SSD, CPLDs, ONIE` - will be added in the initialization flow.
 
 This file will also be collected in techsupport for debugging purposes.
@@ -79,6 +79,7 @@ Some of the components might need to move from compilation to init flow, because
 
 ## Internal NVIDIA Components
 The .mk files under `sonic-buildimage/platform/mellanox/` export the versions of each of the Nvidia components: SDK, FW, SAI, HW-MGMT, MFT.
+There is also an exported variable for the kernel version, outside of `sonic-buildimage/platform/mellanox/`.
 We will add a makefile with a target that creates a file and writes all the versions to it.
 The `slave.mk` file will not be affected by this.
 
@@ -122,6 +123,7 @@ sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable component-versions.service
 ```
 [Unit]
 Description=Platform component listing
+After=pmon.service
 
 [Service]
 Type=oneshot
@@ -158,6 +160,7 @@ We will conduct the following manual tests:
 - Install image and check if the file was created correctly.
 - Restart switch and check that the file is still correct.
 - Change a component, restart and check that the file was updated.
+- Compare fastboot with and without this feature.
 
 # Documentation
 We will update the user manual.
