@@ -45,15 +45,17 @@ The versions that need to be added to the file are:
 - CPLD(s)
 
 All the versions will be listed in a file that will be stored on the switch in /etc/mlnx/.
-The file will be created in compilation at which point it will contain only the internal Nvidia components - SDK, FW, SAI, HW MGMT, MFT, Kernel - since the versions of the platform components will not be known at this stage.
+The file will be created in compilation at which point it will contain only the internal Nvidia components - SDK, FW, SAI, HW MGMT, MFT - since the versions of the platform components will not be known at this stage.
 The versions of the platform components will be added in the initialization flow.
+
+This file will also be collected in techsupport for debugging purposes.
 
 The file will be accessed with cat command:
 ```
 cat /etc/mlnx/component-versions
 ```
 
-Example of a component-versions file:
+Example of a `component-versions` file:
 ```
      Component      |       Version
 -------------------------------------------
@@ -64,15 +66,16 @@ HW-MGMT             |  7.0030.2008
 MFT                 |  4.25.0
 Kernel              |  5.10.0-23-2-amd64
 BIOS                |  5.6.5
-SSD                 |  
-CPLD(s)             |  CPLD000087_REV0600_CPLD000075_REV0600
+SSD                 |  0202-000
+CPLD1               |  CPLD000087_REV0600
+CPLD2               |  CPLD000075_REV0600
 ```
 
 ## Internal NVIDIA Components
-The .mk files under sonic-buildimage/platform/mellanox/ export the versions of each of the Nvidia components: SDK, FW, SAI, HW-MGMT, MFT. There's also a kernel version variable that is accessable during compilation.
-We will add an makefile with a target that outputs a file and write all the versions to it.
+The .mk files under `sonic-buildimage/platform/mellanox/` export the versions of each of the Nvidia components: SDK, FW, SAI, HW-MGMT, MFT.
+We will add a makefile with a target that outputs a file and write all the versions to it.
 
-component-versions/Makefile:
+`sonic-buildimage/platform/mellanox/component-versions/Makefile`:
 ```
 .ONESHELL:
 SHELL = /bin/bash
@@ -82,9 +85,10 @@ MAIN_TARGET = component-versions
 
 $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
 	echo $<COMPONENT_VERSION> >> $(DEST)/$(MAIN_TARGET)
+    ...
 ```
 
-component-versions.mk
+`sonic-buildimage/platform/mellanox/component-versions.mk`:
 ```
 COMPONENT_VERSIONS_FILE = component-versions
 $(COMPONENT_VERSIONS_FILE)_SRC_PATH = $(PLATFORM_PATH)/component-versions
@@ -99,7 +103,7 @@ export COMPONENT_VERSIONS_FILE
 ## Platform Components
 The platform versions can be read using the fwutil command.
 
-We will create a one shot service in `sonic_debian_extension.j2` that will only be added if the platform is mellanox.
+We will create a one shot service in `sonic-buildimage/files/build_templates/sonic_debian_extension.j2` that will only be added if the platform is mellanox.
 ```
 {% if sonic_asic_platform == "mellanox" %}
 sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable component-versions.service
@@ -110,6 +114,8 @@ We need to handle the case of component upgrade as well.
 
 ## Techsupport
 The versions file will also be collected at show techsupport.
+
+`generate_dump`:
 ```
 collect_mellanox() {
    ...
