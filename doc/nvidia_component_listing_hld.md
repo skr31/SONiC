@@ -110,7 +110,22 @@ sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable component-versions.service
 {% endif %}
 ```
 
-We need to handle the case of component upgrade as well.
+`component-versions.service`:
+```
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/bin/update-component-versions.sh
+```
+
+`update-component-versions.sh`:
+```
+fwutil show status > version_string
+
+// check if versions are different from the ones in the file
+// if so, format the versions
+
+version_string >> /etc/mlnx/component-versions
+```
 
 ## Techsupport
 The versions file will also be collected at show techsupport.
