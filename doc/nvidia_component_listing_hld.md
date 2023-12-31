@@ -25,11 +25,11 @@
 
 # Motivation
 
-We want to have a file that gathers all the versions of the Nvidia components in an image in one place, that would be easy to access when needed.
+We want to have a file that gathers the versions of all Nvidia SONiC components. The file can be easily accessed by customers who wish to have this information.
 
 # About this Manual
 
-This document provides an overview of the implementation of adding file containing all the NVIDIA components.
+This document provides an overview of the implementation of adding a new file that holds NVIDIA SONiC components versions.
 
 # Design
 
@@ -42,7 +42,7 @@ The versions that need to be added to the file are:
 - Kernel
 - BIOS
 - SSD
-- CPLD(s)
+- CPLDs
 
 All the versions will be listed in a file that will be stored on the switch in /etc/mlnx/.
 The file will be created in compilation at which point it will contain only the internal Nvidia components - SDK, FW, SAI, HW MGMT, MFT - since the versions of the platform components will not be known at this stage.
@@ -50,7 +50,7 @@ The versions of the platform components will be added in the initialization flow
 
 This file will also be collected in techsupport for debugging purposes.
 
-The file will be accessed with cat command:
+The file will be accessed with `cat` command:
 ```
 cat /etc/mlnx/component-versions
 ```
@@ -74,9 +74,10 @@ CPLD2               |  CPLD000075_REV0600
 
 ## Internal NVIDIA Components
 The .mk files under `sonic-buildimage/platform/mellanox/` export the versions of each of the Nvidia components: SDK, FW, SAI, HW-MGMT, MFT.
-We will add a makefile with a target that outputs a file and write all the versions to it.
+We will add a makefile with a target that creates a file and writes all the versions to it.
+The `slave.mk` file will not be affected by this.
 
-`sonic-buildimage/platform/mellanox/component-versions/Makefile`:
+The versions file will be created in `sonic-buildimage/platform/mellanox/component-versions/Makefile`:
 ```
 .ONESHELL:
 SHELL = /bin/bash
@@ -89,7 +90,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
     ...
 ```
 
-`sonic-buildimage/platform/mellanox/component-versions.mk`:
+The versions file will be added to the image in `sonic-buildimage/platform/mellanox/component-versions.mk`:
 ```
 COMPONENT_VERSIONS_FILE = component-versions
 $(COMPONENT_VERSIONS_FILE)_SRC_PATH = $(PLATFORM_PATH)/component-versions
@@ -114,6 +115,9 @@ sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable component-versions.service
 
 `component-versions.service`:
 ```
+[Unit]
+Description=Platform component listing
+
 [Service]
 Type=oneshot
 ExecStart=/bin/bash /usr/bin/update-component-versions.sh
@@ -124,7 +128,7 @@ ExecStart=/bin/bash /usr/bin/update-component-versions.sh
 fwutil show status > version_string
 
 // check if versions are different from the ones in the file
-// if so, format the versions
+// if so, format the version_string and update
 
 version_string >> /etc/mlnx/component-versions
 ```
@@ -146,9 +150,9 @@ The file will be placed under the `dump/` directory in the tar.
 
 ## Manual Tests
 We will conduct the following manual tests:
-- Install image and check if the file was created correctly
-- Restart switch and check that the file is still correct
-- Change a component, restart and check that the file was updated
+- Install image and check if the file was created correctly.
+- Restart switch and check that the file is still correct.
+- Change a component, restart and check that the file was updated.
 
 # Documentation
 We will update the user manual.
