@@ -71,6 +71,7 @@ CPLD1               |  CPLD000087_REV0600
 CPLD2               |  CPLD000075_REV0600
 ```
 
+
 ## Internal NVIDIA Components
 The .mk files under `sonic-buildimage/platform/mellanox/` export the versions of each of the Nvidia components: SDK, FW, SAI, HW-MGMT, MFT.
 We will add a makefile with a target that outputs a file and write all the versions to it.
@@ -99,6 +100,7 @@ MLNX_FILES += $(COMPONENT_VERSIONS_FILE)
 
 export COMPONENT_VERSIONS_FILE
 ```
+
 
 ## Platform Components
 The platform versions can be read using the fwutil command.
@@ -142,12 +144,12 @@ The file will be placed under the `dump/` directory in the tar.
 
 # Tests
 
-## Unit Tests
-The following unit tests will be added:
-
-
 ## Manual Tests
+We will conduct the following manual tests:
+- Install image and check if the file was created correctly
+- Restart switch and check that the file is still correct
+- Change a component, restart and check that the file was updated
 
 # Documentation
-
+We will update the user manual.
 
