@@ -21,11 +21,13 @@
 
 | Rev  |   Date   |    Author     | Change Description        |
 | :--: | :------: | :-----------: | ------------------------- |
-| 0.1  | 17/05/23 | Sophie Kravitz| Initial version           |
+| 0.1  | 02/01/24 | Sophie Kravitz| Initial version           |
 
 # Motivation
 
-We want to have a file that gathers the versions of all Nvidia SONiC components. The file can be easily accessed by customers who wish to have this information.
+We want to have a file that gathers the versions of all Nvidia SONiC components for two reasons:
+a. Easily compare actual build vs qualified hash components (listed in SONiC release notes)
+b. Shorten debug time - one place for the support team to view all relevant information
 
 # About this Manual
 
@@ -43,14 +45,15 @@ The versions that need to be added to the file are:
 - BIOS
 - SSD
 - CPLDs
+- ONIE
 
 All the versions will be listed in a file that will be stored on the switch in /etc/mlnx/.
-The file will be created in compilation at which point it will contain only the internal Nvidia components - SDK, FW, SAI, HW MGMT, MFT - since the versions of the platform components will not be known at this stage.
-The versions of the platform components will be added in the initialization flow.
+The file will be created in compilation at which point it will contain only the internal Nvidia components - `SDK, FW, SAI, HW MGMT, MFT` - since the versions of the platform components will not be known at this stage.
+The versions of the platform components - `BIOS, SSD, CPLDs, ONIE` - will be added in the initialization flow.
 
 This file will also be collected in techsupport for debugging purposes.
 
-The file will be accessed with `cat` command:
+The file will be viewed with `cat` command:
 ```
 cat /etc/mlnx/component-versions
 ```
@@ -58,19 +61,21 @@ cat /etc/mlnx/component-versions
 Example of a `component-versions` file:
 ```
      Component      |       Version
--------------------------------------------
+---------------------------------------------
 SDK                 |  4.6.2134
 FW                  |  2012.2134
-SAI                 |  SAIBuild2311.26.0.28
-HW-MGMT             |  7.0030.2008
+SAI                 |  SAIBuild2311.26.0.28          
+HW-MGMT             |  7.0030.2008                  // compilation
 MFT                 |  4.25.0
-Kernel              |  5.10.0-23-2-amd64
+Kernel              |  5.10.0-23-2-amd64     ________________________
 BIOS                |  5.6.5
 SSD                 |  0202-000
-CPLD1               |  CPLD000087_REV0600
+CPLD1               |  CPLD000087_REV0600           // init flow
 CPLD2               |  CPLD000075_REV0600
+ONIE                |  2022.08-5.3.0010-9600
 ```
 
+Some of the components might need to move from compilation to init flow, because they can be changed after installation.
 
 ## Internal NVIDIA Components
 The .mk files under `sonic-buildimage/platform/mellanox/` export the versions of each of the Nvidia components: SDK, FW, SAI, HW-MGMT, MFT.
