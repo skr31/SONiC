@@ -47,7 +47,7 @@ The versions that need to be added to the file are:
 - CPLDs
 - ONIE
 
-All the versions will be listed in a file that will be stored on the switch in /etc/mlnx/.
+All the versions will be listed in a file that will be stored on the switch in `/etc/mlnx/`.
 The file will be created in compilation at which point it will contain only the internal Nvidia components - `SDK, FW, SAI, HW MGMT, MFT, Kernel` - since the versions of the platform components will not be known at this stage.
 The versions of the platform components - `BIOS, SSD, CPLDs, ONIE` - will be added in the initialization flow.
 
@@ -63,7 +63,8 @@ Example of a `component-versions` file:
      Component      |       Version
 ---------------------------------------------
 SDK                 |  4.6.2134
-FW                  |  2012.2134
+FW on image         |  2012.2134
+FW burned on asic   |  2012.2134
 SAI                 |  SAIBuild2311.26.0.28          
 HW-MGMT             |  7.0030.2008                  // compilation
 MFT                 |  4.25.0
@@ -75,7 +76,6 @@ CPLD2               |  CPLD000075_REV0600
 ONIE                |  2022.08-5.3.0010-9600
 ```
 
-Some of the components might need to move from compilation to init flow, because they can be changed after installation.
 
 ## Internal NVIDIA Components
 The .mk files under `sonic-buildimage/platform/mellanox/` export the versions of each of the Nvidia components: SDK, FW, SAI, HW-MGMT, MFT.
@@ -96,7 +96,7 @@ $(addprefix $(DEST)/, $(MAIN_TARGET)): $(DEST)/% :
     ...
 ```
 
-The versions file will be added to the image in `sonic-buildimage/platform/mellanox/component-versions.mk`:
+The target above will be added to the compilation process in `sonic-buildimage/platform/mellanox/component-versions.mk`:
 ```
 COMPONENT_VERSIONS_FILE = component-versions
 $(COMPONENT_VERSIONS_FILE)_SRC_PATH = $(PLATFORM_PATH)/component-versions
@@ -112,7 +112,7 @@ export COMPONENT_VERSIONS_FILE
 ## Platform Components
 The platform versions can be read using the fwutil command.
 
-We will create a one shot service in `sonic-buildimage/files/build_templates/sonic_debian_extension.j2` that will only be added if the platform is mellanox.
+We will create a service in `sonic-buildimage/files/build_templates/sonic_debian_extension.j2` that will only be added if the platform is mellanox.
 ```
 {% if sonic_asic_platform == "mellanox" %}
 sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable component-versions.service
@@ -134,8 +134,7 @@ ExecStart=/bin/bash /usr/bin/update-component-versions.sh
 ```
 fwutil show status > version_string
 
-// check if versions are different from the ones in the file
-// if so, format the version_string and update
+// format the version_string and update
 
 version_string >> /etc/mlnx/component-versions
 ```
@@ -164,4 +163,5 @@ We will conduct the following manual tests:
 
 # Documentation
 We will update the user manual.
+
 
