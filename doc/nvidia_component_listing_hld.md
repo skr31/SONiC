@@ -19,13 +19,14 @@
 
 ### Revision  
 
-| Rev  |   Date   |    Author     | Change Description        |
-| :--: | :------: | :-----------: | ------------------------- |
-| 0.1  | 02/01/24 | Sophie Kravitz| Initial version           |
+| Rev  |   Date   |    Author     |       Change Description                  |
+| :--: | :------: | :-----------: | ------------------------------------------|
+| 0.1  | 02/01/24 | Sophie Kravitz| Initial version                           |
+| 0.2  | 02/01/24 | Sophie Kravitz| Changed file format and removed service   |
 
 # Motivation
 
-We want to have a file that gathers the versions of all Nvidia SONiC components for two reasons:
+We want to have a script that outputs the versions of all Nvidia SONiC components for two reasons:
 - Easily compare actual build vs qualified hash components (listed in SONiC release notes)
 - Shorten debug time - one place for the support team to view all relevant information
 
@@ -35,7 +36,7 @@ This document provides an overview of the implementation of adding a new file th
 
 # Design
 
-The versions that need to be added to the file are:
+The versions that need to be printed by the script are:
 - SDK
 - FW
 - SAI
@@ -47,33 +48,34 @@ The versions that need to be added to the file are:
 - CPLDs
 - ONIE
 
-All the versions will be listed in a file that will be stored on the switch in `/etc/mlnx/`.
-The file will be created in compilation at which point it will contain only the internal Nvidia components - `SDK, FW, SAI, HW MGMT, MFT, Kernel` - since the versions of the platform components will not be known at this stage.
-The versions of the platform components - `BIOS, SSD, CPLDs, ONIE` - will be added in the initialization flow.
+All the versions will be printed to the screen by the versions script.
+A file will be created in compilation which will contain only the internal Nvidia components - `SDK, FW, SAI, HW MGMT, MFT, Kernel` - since the versions of the platform components will not be known at this stage.
 
-This file will also be collected in techsupport for debugging purposes.
+Some of these versions can be changed after the SONiC installation, so there will be another column in the output with the actual version that is installed at that moment on the switch. This column will be added on the fly to the output of the script.
+The versions of the platform components - `BIOS, SSD, CPLDs, ONIE` -  will also be added on the fly each time the version generation script is called.
 
-The file will be viewed with `cat` command:
+The compilation file and the output of the script will also be collected in techsupport for debugging purposes.
+
+The versions will be printed to the screen when executing the script:
 ```
-cat /etc/mlnx/component-versions
+component-versions.sh
 ```
 
-Example of a `component-versions` file:
+Example of a `component-versions.sh` output:
 ```
-     Component      |       Version
----------------------------------------------
-SDK                 |  4.6.2134
-FW on image         |  2012.2134
-FW burned on asic   |  2012.2134
-SAI                 |  SAIBuild2311.26.0.28          
-HW-MGMT             |  7.0030.2008                  // compilation
-MFT                 |  4.25.0
-Kernel              |  5.10.0-23-2-amd64     ________________________
-BIOS                |  5.6.5
-SSD                 |  0202-000
-CPLD1               |  CPLD000087_REV0600           // init flow
-CPLD2               |  CPLD000075_REV0600
-ONIE                |  2022.08-5.3.0010-9600
+     Component      |       compilation      |     actual
+-----------------------------------------------------------------
+SDK                 |  4.6.2134              |  4.6.2134  
+FW                  |  2012.2134             |  2012.2134
+SAI                 |  SAIBuild2311.26.0.28  |  SAIBuild2311.26.0.28        
+HW-MGMT             |  7.0030.2008           |  7.0030.2008       
+MFT                 |  4.25.0                |  4.25.0    
+Kernel              |  5.10.0-23-2-amd64     |  5.10.0-23-2-amd64
+BIOS                |                        |  5.6.5 
+SSD                 |                        |  0202-000 
+CPLD1               |                        |  CPLD000087_REV0600      
+CPLD2               |                        |  CPLD000075_REV0600
+ONIE                |                        |  2022.08-5.3.0010-9600
 ```
 
 
@@ -111,43 +113,27 @@ export COMPONENT_VERSIONS_FILE
 
 ## Platform Components
 The platform versions can be read using the fwutil command.
-
-We will create a service in `sonic-buildimage/files/build_templates/sonic_debian_extension.j2` that will only be added if the platform is mellanox.
-```
-{% if sonic_asic_platform == "mellanox" %}
-sudo LANG=C chroot $FILESYSTEM_ROOT systemctl enable component-versions.service
-{% endif %}
-```
-
-`component-versions.service`:
-```
-[Unit]
-Description=Platform component listing
-After=pmon.service
-
-[Service]
-Type=oneshot
-ExecStart=/bin/bash /usr/bin/update-component-versions.sh
-```
+Each of the internal Nvidia components need to be collected from different places.
 
 `update-component-versions.sh`:
 ```
 fwutil show status > version_string
 
-// format the version_string and update
+// format the version_string 
+// get the internal component versions
 
-version_string >> /etc/mlnx/component-versions
+echo version_string
 ```
 
 ## Techsupport
-The versions file will also be collected at show techsupport.
+The versions script will also be executed at show techsupport.
 
 `generate_dump`:
 ```
 collect_mellanox() {
    ...
    ...
-   save_file /etc/mlnx/component-versions dump
+   save_command component-versions.sh dump
 }
 ```
 The file will be placed under the `dump/` directory in the tar.
@@ -157,11 +143,10 @@ The file will be placed under the `dump/` directory in the tar.
 ## Manual Tests
 We will conduct the following manual tests:
 - Install image and check if the file was created correctly.
-- Restart switch and check that the file is still correct.
-- Change a component, restart and check that the file was updated.
-- Compare fastboot with and without this feature.
+- Change a component, check that the file was updated.
+- Check that techsupport collects the file and the script output.
+- Compare techsupport with and without this feature.
 
 # Documentation
 We will update the user manual.
-
 
