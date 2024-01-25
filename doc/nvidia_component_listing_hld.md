@@ -110,19 +110,40 @@ MLNX_FILES += $(COMPONENT_VERSIONS_FILE)
 export COMPONENT_VERSIONS_FILE
 ```
 
+The versions file will be copied to /etc/mlnx/ in `sonic_debian_extension.j2`
+```
+sudo cp $files_path/$COMPONENT_VERSIONS_FILE $FILESYSTEM_ROOT/etc/mlnx/component-versions
+```
+
 
 ## Platform Components
 The platform versions can be read using the fwutil command.
 Each of the internal Nvidia components need to be collected from different places.
 
-`update-component-versions.sh`:
+`get-component-versions.py`:
 ```
 fwutil show status > version_string
 
-// format the version_string 
-// get the internal component versions
+// format the version_string and update
 
 echo version_string
+```
+
+The target above will be added to the compilation process in `sonic-buildimage/platform/mellanox/get-component-versions.mk`:
+```
+GET_COMPONENT_VERSIONS = get-component-versions.py
+$(GET_COMPONENT_VERSIONS)_SRC_PATH = $(PLATFORM_PATH)/
+
+SONIC_MAKE_FILES += $(GET_COMPONENT_VERSIONS)
+
+MLNX_FILES += $(GET_COMPONENT_VERSIONS)
+
+export GET_COMPONENT_VERSIONS
+```
+
+The versions file will be copied to /etc/mlnx/ in `sonic_debian_extension.j2`
+```
+sudo cp $files_path/$GET_COMPONENT_VERSIONS $FILESYSTEM_ROOT/usr/bin/
 ```
 
 ## Techsupport
@@ -133,7 +154,7 @@ The versions script will also be executed at show techsupport.
 collect_mellanox() {
    ...
    ...
-   save_command component-versions.sh dump
+   save_cmd get-component-versions.py dump
 }
 ```
 The file will be placed under the `dump/` directory in the tar.
