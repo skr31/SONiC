@@ -37,9 +37,12 @@ This ability is only for verification tests, so it needs to only be available in
 We need to add two components:
 1. A service controlled by supervisord
 2. A script that sets all the specified ports to MLOOP.
+These two files need to be copied to syncd on the tested switch.
+
+The usage:
+`persistent_mloop.py --ports port1,port2,..`
 
 ## Supevisord Daemon
-
 
 The supervisord file will be copied to /etc/supervisord/conf.d/ in `mloop.conf`
 ```
