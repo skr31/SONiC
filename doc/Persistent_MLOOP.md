@@ -1,5 +1,4 @@
-# HLD NVIDIA Component Listing #
-
+# HLD Persistent MLOOP #
 
 
 ## Table of Content 
@@ -21,7 +20,7 @@
 
 | Rev  |   Date   |    Author     |       Change Description                  |
 | :--: | :------: | :-----------: | ------------------------------------------|
-| 0.1  | 23/09/24 | Sophie Kravitz| Initial version                           |
+| 0.1  | 08/10/24 | Sophie Kravitz| Initial version                           |
 
 # Motivation
 
@@ -37,29 +36,28 @@ This ability is only for verification tests, so it needs to only be available in
 We need to add two components:
 1. A service controlled by supervisord
 2. A script that sets all the specified ports to MLOOP.
+
 These two files need to be copied to syncd on the tested switch.
 
-The usage:
+How set ports to MLOOP:
+
 `persistent_mloop.py --ports port1,port2,..`
 
-## Supevisord Daemon
-
-The supervisord file will be copied to /etc/supervisord/conf.d/ in `mloop.conf`
-```
-[program:persistent_mloop]
-command=persistent_mloop.py
-process_name=?
-stdout_logfile=/tmp/mloop.out.log
-stderr_logfile=/tmp/mloop.err.log
-redirect_stderr=false
-autostart=true
-autorestart=false
-startsecs=1?
-numprocs=1?
-```
-
 ## MLOOP Script
+To configure ports to MLOOP persistently, `persistent_mloop.py` will be called with a list of ports to be configured.
+The script will translate the ports to logical ports, call the SDK api as was used before, and will also save the ports to a file. 
 
+```
+parse_ports()
+ports_to_logical_ports()
+
+for logical_port in mloop_ports:
+    sx_api_port_phys_loopback.py --cmd 0 --log_port port --loopback_type 2 –force
+
+save_ports()
+```
+
+When called from the service, the script will read the saved port list and preform the same flow as before: 
 ```
 check_ports_to_configure()
 ports_to_logical_ports()
@@ -68,6 +66,18 @@ for logical_port in mloop_ports:
     sx_api_port_phys_loopback.py --cmd 0 --log_port port --loopback_type 2 –force
 ```
 
+## Supevisord Daemon
+A new service will be added that will call the `persistent_mloop.py` script which will configure the saved ports to MLOOP.
+The supervisord file will be copied to /etc/supervisord/conf.d/ in `mloop.conf`
+
+```
+[program:persistent_mloop]
+command=persistent_mloop.py
+stdout_logfile=/tmp/mloop.out.log
+stderr_logfile=/tmp/mloop.err.log
+autostart=true
+autorestart=false
+```
 
 # Tests
 
@@ -79,3 +89,4 @@ Will conduct the following manual tests:
 - 
 
 # Documentation
+A confluence page will be added.
