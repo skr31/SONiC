@@ -39,13 +39,18 @@ We need to add two components:
 
 These two files need to be copied to syncd on the tested switch.
 
-How set ports to MLOOP:
+Two ways to set ports to MLOOP:
+1. Port list - provide a list of ports separates by space
+    
+    `persistent_mloop.py --ports port1 port2 ..`
 
-`persistent_mloop.py --ports port1,port2,..`
+2. Port range - provide two ports that specify the range to be set, also separated by space
+    
+    `persistent_mloop.py --port-range start_port end_port`
 
 ## MLOOP Script
 To configure ports to MLOOP persistently, `persistent_mloop.py` will be called with a list of ports to be configured.
-The script will translate the ports to logical ports, call the SDK api as was used before, and will also save the ports to a file. 
+The script will translate the ports to logical ports, call the SDK api as was used before, and will also save the ports to a file - `/etc/mlnx/mloop_ports.json`. 
 
 ```
 parse_ports()
@@ -59,8 +64,8 @@ save_ports()
 
 When called from the service, the script will read the saved port list and preform the same flow as before: 
 ```
-check_ports_to_configure()
-ports_to_logical_ports()
+read_saved_ports()
+...
 
 for logical_port in mloop_ports:
     sx_api_port_phys_loopback.py --cmd 0 --log_port port --loopback_type 2 –force
@@ -83,10 +88,10 @@ autorestart=false
 
 ## Manual Tests
 Will conduct the following manual tests:
-- Configure one port to MLOOP, check if it stays after restart.
-- Configure a few ports to MLOOP, check if it stays after restart.
-- Configure back to normal, check that it's normal after restart.
-- 
+- Configuring one port to MLOOP.
+- Configuring a few ports to MLOOP.
+- Configuring a range.
+- Configuring with bad args - invalid port, invalid port range,...
 
 # Documentation
 A confluence page will be added.
